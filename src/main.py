@@ -1,15 +1,13 @@
 import sys
 from PyQt5 import uic
 from PyQt5.QtWidgets import (
-    QMainWindow, QApplication, QFileDialog, QTableWidgetItem, QPushButton)
-# from QtGui import QIcon
+    QMainWindow, QApplication, QFileDialog,
+    QTableWidgetItem, QPushButton, QHeaderView)
+from PyQt5.QtGui import QIcon
 from PyQt5.QtCore import QObject, QThread, pyqtSignal
 from spleeter.separator import Separator
-from time import sleep
 
 
-# https://realpython.com/python-pyqt-qthread/
-# Step 1: Create a worker class
 class Worker(QObject):
     finished = pyqtSignal(int)
     progress = pyqtSignal(int)
@@ -29,33 +27,28 @@ class Worker(QObject):
                 separator = Separator(
                     f'spleeter:{self.parts_to_separate}stems')
                 separator.separate_to_file(
-                        item[0],
-                        self.output_path if self.output_path != '' else'output'
+                    item[0],
+                    self.output_path if self.output_path != '' else'output'
                 )
                 item[1] = 'Finished'
                 count += 1
                 self.progress.emit(count)
         self.finished.emit(count)
 
-    def test(self):
-        """Long-running task."""
-        for i in range(5):
-            sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit(1)
-
 
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi("gui_app.ui", self)
+        uic.loadUi("src/ui/gui_app.ui", self)
         self.parts_to_separate = 0
         self.input_path = []
         self.output_path = ''
         self.thread = {}
         self.connect_buttons()
+        self.setTableHeaderBehaviour()
         self.enable_button(self.spleet_button, False)
-        # self.populate_table()
+        self.setWindowIcon(QIcon('src/icon/logo.png'))
+        self.setWindowTitle('Banana Spleet')
 
     def connect_buttons(self):
         """ Connect buttons with events
@@ -63,13 +56,17 @@ class App(QMainWindow):
         self.browse_button.clicked.connect(self.browse_clic)
         self.save_button.clicked.connect(self.save_browse_clic)
         self.button2.clicked.connect(lambda: self.parts(2))
-        # self.button2.clicked.connect(self.runLongTask)
         self.button4.clicked.connect(lambda: self.parts(4))
         self.button5.clicked.connect(lambda: self.parts(5))
         self.spleet_button.clicked.connect(self.spleet)
 
+    def setTableHeaderBehaviour(self):
+        header = self.tableWidget.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+
     def populate_table(self):
-        # setColumnWidth(0, 200)
         self.tableWidget.setRowCount(0)
         for i, item in enumerate(self.input_path, 0):
             self.tableWidget.insertRow(i)
@@ -80,12 +77,10 @@ class App(QMainWindow):
                 i, 1, QTableWidgetItem(item[1])
             )
             del_btn = QPushButton(self.tableWidget)
-            del_btn.setText('Delete')
+            del_btn.setIcon(QIcon('src/icon/edit-delete.png'))
             del_btn.setGeometry(32, 32, 0, 0)
             del_btn.clicked.connect(lambda: self.del_row(i))
             self.tableWidget.setCellWidget(i, 2, del_btn)
-        # self.tableWidget.horizontalHeader().setStretchLastSection(True)
-        self.tableWidget.resizeColumnsToContents()
 
     def browse_clic(self):
         """File browse button click event (input)
@@ -93,7 +88,6 @@ class App(QMainWindow):
         path = QFileDialog.getOpenFileNames(
             self, 'Open a song file', '',
             '.mp3 (*.mp3);; .wav (*.wav);; All files(*.*)')
-        print(path)
         if path != ([], ''):
             # .replace('file:///', '')
             for item in path[0]:
@@ -112,7 +106,6 @@ class App(QMainWindow):
             self.enable_button(self.spleet_button, self.can_be_enabled())
 
     def del_row(self, index):
-        print(index)
         self.input_path.pop(index)
         self.populate_table()
 
@@ -154,7 +147,6 @@ class App(QMainWindow):
         """
         return self.input_path != [] and self.parts_to_separate != 0
 
-    # Snip...
     def runLongTask(self):
         # Step 2: Create a QThread object
         self.thread = QThread()
@@ -193,12 +185,10 @@ class App(QMainWindow):
 
     def finishedProgress(self, n):
         self.progress_label.setText(f"Finished: {n} files spleeted.")
-        # self.populate_table()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     GUI = App()
     GUI.show()
-
     sys.exit(app.exec())
