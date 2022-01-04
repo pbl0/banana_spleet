@@ -30,7 +30,7 @@ pip install spleeter pyqt5
 python src/main.py
 ```
 ### TODO
-- [] Create executable for Linux, Windows and MacOs.
-- [] Make high quality setting actually do something.
+- [ ] Create executable for Linux, Windows and MacOs.
+- [ ] Make high quality setting actually do something.
 
 
